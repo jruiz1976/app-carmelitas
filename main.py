@@ -30,7 +30,7 @@ def inicializar_base_datos():
     conn.close()
 
 def formatear_moneda(v):
-    return f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return f"{float(v):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 def main(page: ft.Page):
     inicializar_base_datos()
@@ -61,7 +61,7 @@ def main(page: ft.Page):
     dd_cat = ft.Dropdown(label="Categoría", value="Ofrenda", options=[ft.dropdown.Option(c) for c in cats])
     txt_monto = ft.TextField(label="Monto (Bs.)", keyboard_type=ft.KeyboardType.NUMBER)
     txt_desc = ft.TextField(label="Descripción (Opcional)", multiline=True, min_lines=2, max_lines=3)
-    dd_tema = ft.Dropdown(label="Tema Visual", value="Carmelita Clásico", options=[ft.dropdown.Option(t) for t in TEMAS], on_select=lambda e: tema(e.control.value))
+    dd_tema = ft.Dropdown(label="Tema Visual (Paleta de Colores)", value="Carmelita Clásico", options=[ft.dropdown.Option(t) for t in TEMAS], on_select=lambda e: tema(e.control.value))
     t_s = ft.TextField(label="Comunidad / Sede", value=s0, dense=True)
     t_e = ft.TextField(label="Hermana Responsable", value=e0, dense=True)
     t_c = ft.TextField(label="Cédula", value=c0, dense=True)
@@ -81,7 +81,8 @@ def main(page: ft.Page):
         conn.commit()
         conn.close()
         cargar()
-        msg("Eliminado", "red")
+        msg("Movimiento eliminado", "red")
+        
     def ver_recibo(sede, fec, cat, desc, mon):
         def cerrar(e):
             dlg.open = False
@@ -106,14 +107,10 @@ def main(page: ft.Page):
     def ver_reporte(e):
         sede, enc, ced = gcfg()
         conn = sqlite3.connect(DB_NAME)
-        c = conn.cursor()
-        c.execute("SELECT fecha, tipo, categoria, monto FROM movimientos WHERE usuario_id = ? ORDER BY id DESC", (uid,))
-        filas = c.fetchall()
-        c.execute("SELECT SUM(monto) FROM movimientos WHERE usuario_id = ? AND tipo = 'Ingreso'", (uid,))
-        ing = next(iter(c.fetchone() or (0.0,))) or 0.0
-        c.execute("SELECT SUM(monto) FROM movimientos WHERE usuario_id = ? AND tipo = 'Egreso'", (uid,))
-        egr = next(iter(c.fetchone() or (0.0,))) or 0.0
+        filas = conn.cursor().execute("SELECT fecha, tipo, categoria, monto FROM movimientos WHERE usuario_id = ? ORDER BY id DESC", (uid,)).fetchall()
         conn.close()
+        ing = sum(float(m) for _, t, _, m in filas if t == "Ingreso")
+        egr = sum(float(m) for _, t, _, m in filas if t == "Egreso")
         saldo = ing - egr
         items = [ft.Text(sede.upper(), size=11, weight=ft.FontWeight.BOLD, color="#5d4037"), ft.Text(f"Emitido: {datetime.now().strftime('%d/%m/%Y %H:%M')}", size=10, color="grey"), ft.Divider()]
         for fec, tip, cat, mon in filas:
@@ -129,9 +126,11 @@ def main(page: ft.Page):
         page.update()
 
     def cargar():
-        lista.controls.clear()
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
+        todas = c.execute("SELECT tipo, monto FROM movimientos WHERE usuario_id = ?", (uid,)).fetchall()
+        ing = sum(float(m) for t, m in todas if t == "Ingreso")
+        egr = sum(float(m) for t, m in todas if t == "Egreso")
         q = "SELECT id, fecha, tipo, categoria, descripcion, monto FROM movimientos WHERE usuario_id = ?"
         p = [uid]
         if txt_fec.value.strip():
@@ -140,21 +139,18 @@ def main(page: ft.Page):
         if dd_fcat.value != "Todas":
             q += " AND categoria = ?"
             p.append(dd_fcat.value)
-        c.execute(q + " ORDER BY id DESC", tuple(p))
-        filas = c.fetchall()
-        c.execute("SELECT SUM(monto) FROM movimientos WHERE usuario_id = ? AND tipo = 'Ingreso'", (uid,))
-        ing = next(iter(c.fetchone() or (0.0,))) or 0.0
-        c.execute("SELECT SUM(monto) FROM movimientos WHERE usuario_id = ? AND tipo = 'Egreso'", (uid,))
-        egr = next(iter(c.fetchone() or (0.0,))) or 0.0
+        filas = c.execute(q + " ORDER BY id DESC", tuple(p)).fetchall()
         conn.close()
         lbl_saldo.value = f"Bs. {formatear_moneda(ing - egr)}"
+        nuevas = []
         for mov_id, fec, tip, cat, desc, mon in filas:
             es_i = tip == "Ingreso"
             col = "#2e7d32" if es_i else "#c62828"
-            lista.controls.append(ft.Card(content=ft.Container(padding=10, content=ft.Row(alignment=ft.MainAxisAlignment.SPACE_BETWEEN, controls=[ft.Row(expand=True, spacing=8, controls=[ft.Icon(ft.Icons.ARROW_CIRCLE_UP if es_i else ft.Icons.ARROW_CIRCLE_DOWN, color=col, size=24), ft.Column(expand=True, spacing=1, controls=[ft.Text(cat, weight=ft.FontWeight.BOLD, size=13, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS), ft.Text(desc or "Sin detalle", size=11, color="grey", max_lines=1, overflow=ft.TextOverflow.ELLIPSIS), ft.Text(fec[:10], size=10, color="grey")])]), ft.Row(spacing=0, controls=[ft.Text(f"{'+' if es_i else '-'}Bs. {formatear_moneda(mon)}", weight=ft.FontWeight.BOLD, color=col, size=12), ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color="red", icon_size=18, on_click=lambda e, m=mov_id: borrar(m))])]))))
+            nuevas.append(ft.Card(content=ft.Container(padding=10, content=ft.Row(alignment=ft.MainAxisAlignment.SPACE_BETWEEN, controls=[ft.Row(expand=True, spacing=8, controls=[ft.Icon(ft.Icons.ARROW_CIRCLE_UP if es_i else ft.Icons.ARROW_CIRCLE_DOWN, color=col, size=24), ft.Column(expand=True, spacing=1, controls=[ft.Text(cat, weight=ft.FontWeight.BOLD, size=13, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS), ft.Text(desc or "Sin detalle", size=11, color="grey", max_lines=1, overflow=ft.TextOverflow.ELLIPSIS), ft.Text(fec[:10], size=10, color="grey")])]), ft.Row(spacing=0, controls=[ft.Text(f"{'+' if es_i else '-'}Bs. {formatear_moneda(mon)}", weight=ft.FontWeight.BOLD, color=col, size=12), ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color="red", icon_size=18, on_click=lambda e, m=mov_id: borrar(m))])]))))
+        lista.controls = nuevas
         page.update()
 
-        def guardar(e):
+    def guardar(e):
         if b_g.disabled:
             return
         try:
@@ -202,7 +198,7 @@ def main(page: ft.Page):
     v1 = ft.Container(padding=20, expand=True, content=ft.Column(scroll=ft.ScrollMode.AUTO, spacing=14, controls=[ft.Text("Nuevo Registro Contable", size=19, weight=ft.FontWeight.BOLD), dd_tipo, dd_cat, txt_monto, txt_desc, b_g]))
     b_r = ft.Button("Ver Reporte Contable Oficial", icon=ft.Icons.PICTURE_AS_PDF, bgcolor="#8d6e63", color="white", height=48, on_click=ver_reporte)
     b_cfg = ft.Button("Guardar Configuración", icon=ft.Icons.SAVE, bgcolor="#5d4037", color="white", on_click=scfg)
-    v2 = ft.Container(padding=20, expand=True, content=ft.Column(scroll=ft.ScrollMode.AUTO, spacing=12, controls=[ft.Text("Reportes y Configuración", size=19, weight=ft.FontWeight.BOLD), b_r, ft.Divider(), ft.Text("Configurar Sede y Responsable", weight=ft.FontWeight.BOLD), t_s, t_e, t_c, b_cfg, ft.Divider(), ft.Text("Apariencia", size=15, weight=ft.FontWeight.BOLD), dd_tema]))
+    v2 = ft.Container(padding=20, expand=True, content=ft.Column(scroll=ft.ScrollMode.AUTO, spacing=12, controls=[ft.Text("Reportes y Configuración", size=19, weight=ft.FontWeight.BOLD), b_r, ft.Divider(), dd_tema, ft.Divider(), ft.Text("Configurar Sede y Responsable", weight=ft.FontWeight.BOLD), t_s, t_e, t_c, b_cfg]))
     cont = ft.Container(content=v0, expand=True)
 
     def tab(e):
@@ -216,6 +212,7 @@ def main(page: ft.Page):
         hdr.bgcolor = t["header"]
         b_g.bgcolor = t["btn"]
         b_r.bgcolor = t["btn"]
+        b_cfg.bgcolor = t["header"]
         page.update()
 
     nav = ft.NavigationBar(selected_index=0, on_change=tab, destinations=[ft.NavigationBarDestination(icon=ft.Icons.LIST_ALT, label="Movimientos"), ft.NavigationBarDestination(icon=ft.Icons.ADD_CIRCLE, label="Registrar"), ft.NavigationBarDestination(icon=ft.Icons.SETTINGS, label="Reportes")])
