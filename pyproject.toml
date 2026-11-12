@@ -1,0 +1,9 @@
+[project]
+name = "carmelitas"
+version = "1.0.0"
+description = "Sistema Contable Carmelitas"
+dependencies = ["flet"]
+
+[tool.flet]
+org = "org.carmelitas"
+product = "Contabilidad Carmelitas"
