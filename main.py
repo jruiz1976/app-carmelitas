@@ -154,7 +154,9 @@ def main(page: ft.Page):
             lista.controls.append(ft.Card(content=ft.Container(padding=10, content=ft.Row(alignment=ft.MainAxisAlignment.SPACE_BETWEEN, controls=[ft.Row(expand=True, spacing=8, controls=[ft.Icon(ft.Icons.ARROW_CIRCLE_UP if es_i else ft.Icons.ARROW_CIRCLE_DOWN, color=col, size=24), ft.Column(expand=True, spacing=1, controls=[ft.Text(cat, weight=ft.FontWeight.BOLD, size=13, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS), ft.Text(desc or "Sin detalle", size=11, color="grey", max_lines=1, overflow=ft.TextOverflow.ELLIPSIS), ft.Text(fec[:10], size=10, color="grey")])]), ft.Row(spacing=0, controls=[ft.Text(f"{'+' if es_i else '-'}Bs. {formatear_moneda(mon)}", weight=ft.FontWeight.BOLD, color=col, size=12), ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color="red", icon_size=18, on_click=lambda e, m=mov_id: borrar(m))])]))))
         page.update()
 
-    def guardar(e):
+        def guardar(e):
+        if b_g.disabled:
+            return
         try:
             m = float(txt_monto.value.replace(",", "."))
             if m <= 0:
@@ -162,6 +164,8 @@ def main(page: ft.Page):
         except Exception:
             msg("Monto inválido", "red")
             return
+        b_g.disabled = True
+        page.update()
         sede, _, _ = gcfg()
         ah = datetime.now()
         fec = ah.strftime("%d/%m/%Y") + " " + MESES.get(ah.strftime("%m"), "") + " " + ah.strftime("%H:%M")
@@ -173,9 +177,10 @@ def main(page: ft.Page):
         is_egr = dd_tipo.value == "Egreso"
         txt_monto.value = ""
         txt_desc.value = ""
-        cargar()
+        b_g.disabled = False
         nav.selected_index = 0
-        tab(None)
+        cont.content = v0
+        cargar()
         if is_egr:
             def cerrar_dlg(ev):
                 dlg.open = False
