@@ -17,22 +17,25 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+
+      - name: Aceptar licencias de Android
+        run: yes | sdkmanager --licenses > /dev/null 2>&1 || true
+
       - name: Instalar Flet y compilar APK
         run: |
           pip install --upgrade pip
           pip install "flet[all]"
-
-          # Primer intento para que Flet descargue Flutter, JDK y Android SDK
-          flet build apk --yes || true
-
-          # Aceptar licencias usando el Flutter instalado por Flet
-          FLUTTER_BIN=$(find "$HOME" -path "*/flutter/*/bin/flutter" 2>/dev/null | head -n 1)
-          if [ -n "$FLUTTER_BIN" ]; then
-            yes | "$FLUTTER_BIN" doctor --android-licenses || true
-          fi
-
-          # Compilacion definitiva del APK
-          flet build apk --yes
+          flet build apk --yes --verbose
 
       - name: Subir APK listo para descargar
         uses: actions/upload-artifact@v4
