@@ -175,7 +175,7 @@ def main(page: ft.Page):
         txt_desc.value = ""
         b_g.disabled = False
         nav.selected_index = 0
-        cont.content = v0
+                v0.visible = True; v1.visible = False; v2.visible = False
         cargar()
         if is_egr:
             def cerrar_dlg(ev):
@@ -199,7 +199,7 @@ def main(page: ft.Page):
     b_r = ft.Button("Ver Reporte Contable Oficial", icon=ft.Icons.PICTURE_AS_PDF, bgcolor="#8d6e63", color="white", height=48, on_click=ver_reporte)
     b_cfg = ft.Button("Guardar Configuración", icon=ft.Icons.SAVE, bgcolor="#5d4037", color="white", on_click=scfg)
     v2 = ft.Container(padding=20, expand=True, content=ft.Column(scroll=ft.ScrollMode.AUTO, spacing=12, controls=[ft.Text("Reportes y Configuración", size=19, weight=ft.FontWeight.BOLD), b_r, ft.Divider(), dd_tema, ft.Divider(), ft.Text("Configurar Sede y Responsable", weight=ft.FontWeight.BOLD), t_s, t_e, t_c, b_cfg]))
-       v1.visible = False
+    v1.visible = False
     v2.visible = False
     cont = ft.Stack(controls=[v0, v1, v2], expand=True)
 
@@ -226,6 +226,3 @@ def main(page: ft.Page):
     page.add(ft.SafeArea(content=cont, expand=True), nav)
     tema("Carmelita Clásico")
     cargar()
-
-if __name__ == "__main__":
-    ft.run(main)
