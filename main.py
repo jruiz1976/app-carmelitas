@@ -147,10 +147,9 @@ def main(page: ft.Page):
             es_i = tip == "Ingreso"
             col = "#2e7d32" if es_i else "#c62828"
            nuevas.append(ft.Card(key=str(mov_id), content=ft.Container(
-      lista.controls.clear()
-      lista.controls.extend(nuevas)
+        lista.controls.clear()
+        lista.controls.extend(nuevas)
         page.update()
-
     def guardar(e):
         if b_g.disabled:
             return
