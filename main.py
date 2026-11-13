@@ -175,7 +175,7 @@ def main(page: ft.Page):
         txt_desc.value = ""
         b_g.disabled = False
         nav.selected_index = 0
-                v0.visible = True; v1.visible = False; v2.visible = False
+        v0.visible = True; v1.visible = False; v2.visible = False
         cargar()
         if is_egr:
             def cerrar_dlg(ev):
