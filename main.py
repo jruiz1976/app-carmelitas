@@ -146,7 +146,7 @@ def main(page: ft.Page):
         for mov_id, fec, tip, cat, desc, mon in filas:
             es_i = tip == "Ingreso"
             col = "#2e7d32" if es_i else "#c62828"
-           nuevas.append(ft.Card(key=str(mov_id), content=ft.Container(
+                      nuevas.append(ft.Card(key=str(mov_id), content=ft.Container(padding=10, content=ft.Row(alignment=ft.MainAxisAlignment.SPACE_BETWEEN, controls=[ft.Row(expand=True, spacing=8, controls=[ft.Icon(ft.Icons.ARROW_CIRCLE_UP if es_i else ft.Icons.ARROW_CIRCLE_DOWN, color=col, size=24), ft.Column(expand=True, spacing=1, controls=[ft.Text(cat, weight=ft.FontWeight.BOLD, size=13, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS), ft.Text(desc or "Sin detalle", size=11, color="grey", max_lines=1, overflow=ft.TextOverflow.ELLIPSIS), ft.Text(fec[:10], size=10, color="grey")])]), ft.Row(spacing=0, controls=[ft.Text(f"{'+' if es_i else '-'}Bs. {formatear_moneda(mon)}", weight=ft.FontWeight.BOLD, color=col, size=12), ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color="red", icon_size=18, on_click=lambda e, m=mov_id: borrar(m))])]))))
         lista.controls.clear()
         lista.controls.extend(nuevas)
         page.update()
