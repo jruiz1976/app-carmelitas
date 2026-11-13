@@ -19,11 +19,19 @@ jobs:
 
       - name: Instalar Flet y compilar APK
         run: |
+          pip install --upgrade pip
           pip install "flet[all]"
-          yes | flet build apk --yes || true
-          find "$HOME" -name "sdkmanager" 2>/dev/null | while read sdkm; do
-            yes | "$sdkm" --licenses || true
-          done
+
+          # Primer intento para que Flet descargue Flutter, JDK y Android SDK
+          flet build apk --yes || true
+
+          # Aceptar licencias usando el Flutter instalado por Flet
+          FLUTTER_BIN=$(find "$HOME" -path "*/flutter/*/bin/flutter" 2>/dev/null | head -n 1)
+          if [ -n "$FLUTTER_BIN" ]; then
+            yes | "$FLUTTER_BIN" doctor --android-licenses || true
+          fi
+
+          # Compilacion definitiva del APK
           flet build apk --yes
 
       - name: Subir APK listo para descargar
