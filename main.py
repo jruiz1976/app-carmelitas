@@ -54,7 +54,7 @@ def main(page: ft.Page):
     s0, e0, c0 = gcfg()
     lbl_sede = ft.Text(s0.upper(), color="white70", size=10, weight=ft.FontWeight.BOLD, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS)
     lbl_saldo = ft.Text("Bs. 0,00", size=18, weight=ft.FontWeight.BOLD, color="white")
-    lista = ft.Column(expand=True, spacing=8, scroll=ft.ScrollMode.AUTO)
+    lista = ft.ListView(expand=True, spacing=8, padding=10)
     txt_fec = ft.TextField(label="Filtrar fecha", dense=True, expand=True, on_change=lambda e: cargar())
     dd_fcat = ft.Dropdown(label="Categoría", dense=True, width=135, value="Todas", options=[ft.dropdown.Option("Todas")] + [ft.dropdown.Option(c) for c in cats], on_select=lambda e: cargar())
     dd_tipo = ft.Dropdown(label="Tipo", value="Ingreso", options=[ft.dropdown.Option("Ingreso"), ft.dropdown.Option("Egreso")])
@@ -82,7 +82,6 @@ def main(page: ft.Page):
         conn.close()
         cargar()
         msg("Movimiento eliminado", "red")
-        
     def ver_recibo(sede, fec, cat, desc, mon):
         def cerrar(e):
             dlg.open = False
@@ -142,17 +141,14 @@ def main(page: ft.Page):
         filas = c.execute(q + " ORDER BY id DESC", tuple(p)).fetchall()
         conn.close()
         lbl_saldo.value = f"Bs. {formatear_moneda(ing - egr)}"
-        nuevas = []
+        lista.controls.clear()
         for mov_id, fec, tip, cat, desc, mon in filas:
             es_i = tip == "Ingreso"
             col = "#2e7d32" if es_i else "#c62828"
-            nuevas.append(ft.Card(key=str(mov_id), content=ft.Container(padding=10, content=ft.Row(alignment=ft.MainAxisAlignment.SPACE_BETWEEN, controls=[ft.Row(expand=True, spacing=8, controls=[ft.Icon(ft.Icons.ARROW_CIRCLE_UP if es_i else ft.Icons.ARROW_CIRCLE_DOWN, color=col, size=24), ft.Column(expand=True, spacing=1, controls=[ft.Text(cat, weight=ft.FontWeight.BOLD, size=13, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS), ft.Text(desc or "Sin detalle", size=11, color="grey", max_lines=1, overflow=ft.TextOverflow.ELLIPSIS), ft.Text(fec[:10], size=10, color="grey")])]), ft.Row(spacing=0, controls=[ft.Text(f"{'+' if es_i else '-'}Bs. {formatear_moneda(mon)}", weight=ft.FontWeight.BOLD, color=col, size=12), ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color="red", icon_size=18, on_click=lambda e, m=mov_id: borrar(m))])]))))
-        lista.controls.clear()
-        lista.controls.extend(nuevas)
+            lista.controls.append(ft.Card(content=ft.Container(padding=10, content=ft.Row(alignment=ft.MainAxisAlignment.SPACE_BETWEEN, controls=[ft.Row(expand=True, spacing=8, controls=[ft.Icon(ft.Icons.ARROW_CIRCLE_UP if es_i else ft.Icons.ARROW_CIRCLE_DOWN, color=col, size=24), ft.Column(expand=True, spacing=1, controls=[ft.Text(cat, weight=ft.FontWeight.BOLD, size=13, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS), ft.Text(desc or "Sin detalle", size=11, color="grey", max_lines=1, overflow=ft.TextOverflow.ELLIPSIS), ft.Text(fec[:10], size=10, color="grey")])]), ft.Row(spacing=0, controls=[ft.Text(f"{'+' if es_i else '-'}Bs. {formatear_moneda(mon)}", weight=ft.FontWeight.BOLD, color=col, size=12), ft.IconButton(icon=ft.Icons.DELETE_OUTLINE, icon_color="red", icon_size=18, on_click=lambda e, m=mov_id: borrar(m))])]))))
         page.update()
+
     def guardar(e):
-        if b_g.disabled:
-            return
         try:
             m = float(txt_monto.value.replace(",", "."))
             if m <= 0:
@@ -160,8 +156,6 @@ def main(page: ft.Page):
         except Exception:
             msg("Monto inválido", "red")
             return
-        b_g.disabled = True
-        page.update()
         sede, _, _ = gcfg()
         ah = datetime.now()
         fec = ah.strftime("%d/%m/%Y") + " " + MESES.get(ah.strftime("%m"), "") + " " + ah.strftime("%H:%M")
@@ -173,9 +167,8 @@ def main(page: ft.Page):
         is_egr = dd_tipo.value == "Egreso"
         txt_monto.value = ""
         txt_desc.value = ""
-        b_g.disabled = False
         nav.selected_index = 0
-        v0.visible = True; v1.visible = False; v2.visible = False
+        cont.content = v0
         cargar()
         if is_egr:
             def cerrar_dlg(ev):
@@ -199,18 +192,14 @@ def main(page: ft.Page):
     b_r = ft.Button("Ver Reporte Contable Oficial", icon=ft.Icons.PICTURE_AS_PDF, bgcolor="#8d6e63", color="white", height=48, on_click=ver_reporte)
     b_cfg = ft.Button("Guardar Configuración", icon=ft.Icons.SAVE, bgcolor="#5d4037", color="white", on_click=scfg)
     v2 = ft.Container(padding=20, expand=True, content=ft.Column(scroll=ft.ScrollMode.AUTO, spacing=12, controls=[ft.Text("Reportes y Configuración", size=19, weight=ft.FontWeight.BOLD), b_r, ft.Divider(), dd_tema, ft.Divider(), ft.Text("Configurar Sede y Responsable", weight=ft.FontWeight.BOLD), t_s, t_e, t_c, b_cfg]))
-    v1.visible = False
-    v2.visible = False
-    cont = ft.Column(controls=[v0, v1, v2], expand=True)
+    cont = ft.Container(content=v0, expand=True)
 
     def tab(e):
-        idx = nav.selected_index
-        v0.visible = (idx == 0)
-        v1.visible = (idx == 1)
-        v2.visible = (idx == 2)
-        if idx == 0:
+        cont.content = [v0, v1, v2][nav.selected_index]
+        if nav.selected_index == 0:
             cargar()
-        page.update()
+        else:
+            page.update()
 
     def tema(n):
         t = TEMAS.get(n, TEMAS["Carmelita Clásico"])
@@ -226,3 +215,6 @@ def main(page: ft.Page):
     page.add(ft.SafeArea(content=cont, expand=True), nav)
     tema("Carmelita Clásico")
     cargar()
+
+if __name__ == "__main__":
+    ft.run(main)
