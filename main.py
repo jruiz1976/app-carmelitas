@@ -54,7 +54,7 @@ def main(page: ft.Page):
     s0, e0, c0 = gcfg()
     lbl_sede = ft.Text(s0.upper(), color="white70", size=10, weight=ft.FontWeight.BOLD, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS)
     lbl_saldo = ft.Text("Bs. 0,00", size=18, weight=ft.FontWeight.BOLD, color="white")
-    lista = ft.ListView(expand=True, spacing=8, padding=10)
+    lista = ft.Column(expand=True, spacing=8, scroll=ft.ScrollMode.AUTO)
     txt_fec = ft.TextField(label="Filtrar fecha", dense=True, expand=True, on_change=lambda e: cargar())
     dd_fcat = ft.Dropdown(label="Categoría", dense=True, width=135, value="Todas", options=[ft.dropdown.Option("Todas")] + [ft.dropdown.Option(c) for c in cats], on_select=lambda e: cargar())
     dd_tipo = ft.Dropdown(label="Tipo", value="Ingreso", options=[ft.dropdown.Option("Ingreso"), ft.dropdown.Option("Egreso")])
