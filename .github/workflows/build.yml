@@ -17,17 +17,14 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Pre-aceptar licencias de Android SDK para Flet
-        run: |
-          mkdir -p "$HOME/Android/Sdk/licenses"
-          printf "\n24333f8a63b6825ea9c5514f83c2829b004d1fee" > "$HOME/Android/Sdk/licenses/android-sdk-license"
-          printf "\n84831b9409646a918e30573bab4c9c91346d8abd" > "$HOME/Android/Sdk/licenses/android-sdk-preview-license"
-          printf "\nd975f751698a77b662f1254ddbeed3901e976f5a" > "$HOME/Android/Sdk/licenses/intel-android-extra-license"
-
       - name: Instalar Flet y compilar APK
         run: |
           pip install "flet[all]"
-          flet build apk --yes --skip-flutter-doctor || flet build apk --yes
+          yes | flet build apk --yes || true
+          find "$HOME" -name "sdkmanager" 2>/dev/null | while read sdkm; do
+            yes | "$sdkm" --licenses || true
+          done
+          flet build apk --yes
 
       - name: Subir APK listo para descargar
         uses: actions/upload-artifact@v4
