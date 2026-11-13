@@ -199,10 +199,17 @@ def main(page: ft.Page):
     b_r = ft.Button("Ver Reporte Contable Oficial", icon=ft.Icons.PICTURE_AS_PDF, bgcolor="#8d6e63", color="white", height=48, on_click=ver_reporte)
     b_cfg = ft.Button("Guardar Configuración", icon=ft.Icons.SAVE, bgcolor="#5d4037", color="white", on_click=scfg)
     v2 = ft.Container(padding=20, expand=True, content=ft.Column(scroll=ft.ScrollMode.AUTO, spacing=12, controls=[ft.Text("Reportes y Configuración", size=19, weight=ft.FontWeight.BOLD), b_r, ft.Divider(), dd_tema, ft.Divider(), ft.Text("Configurar Sede y Responsable", weight=ft.FontWeight.BOLD), t_s, t_e, t_c, b_cfg]))
-    cont = ft.Container(content=v0, expand=True)
+       v1.visible = False
+    v2.visible = False
+    cont = ft.Stack(controls=[v0, v1, v2], expand=True)
 
     def tab(e):
-        cont.content = [v0, v1, v2][nav.selected_index]
+        idx = nav.selected_index
+        v0.visible = (idx == 0)
+        v1.visible = (idx == 1)
+        v2.visible = (idx == 2)
+        if idx == 0:
+            cargar()
         page.update()
 
     def tema(n):
