@@ -8,6 +8,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
     steps:
       - name: Descargar codigo
         uses: actions/checkout@v4
@@ -28,6 +32,12 @@ jobs:
         with:
           flutter-version: "3.27.0"
           channel: "stable"
+
+      - name: Aceptar licencias de Android SDK
+        run: |
+          mkdir -p "$ANDROID_HOME/licenses"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+          yes | flutter doctor --android-licenses || true
 
       - name: Instalar Flet y compilar APK
         run: |
