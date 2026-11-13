@@ -201,7 +201,7 @@ def main(page: ft.Page):
     v2 = ft.Container(padding=20, expand=True, content=ft.Column(scroll=ft.ScrollMode.AUTO, spacing=12, controls=[ft.Text("Reportes y Configuración", size=19, weight=ft.FontWeight.BOLD), b_r, ft.Divider(), dd_tema, ft.Divider(), ft.Text("Configurar Sede y Responsable", weight=ft.FontWeight.BOLD), t_s, t_e, t_c, b_cfg]))
     v1.visible = False
     v2.visible = False
-    cont = ft.Stack(controls=[v0, v1, v2], expand=True)
+    cont = ft.Column(controls=[v0, v1, v2], expand=True)
 
     def tab(e):
         idx = nav.selected_index
