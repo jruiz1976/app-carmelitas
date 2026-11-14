@@ -12,24 +12,27 @@ jobs:
       - name: Descargar codigo
         uses: actions/checkout@v4
 
-      - name: Instalar Flet en el entorno
-        run: |
-          python3 -m venv .venv
-          .venv/bin/pip install --upgrade pip
-          .venv/bin/pip install "flet[all]"
-
-      - name: Compilar APK con Flet
-        id: build
-        uses: flet-dev/flet-build-action@v1
+      - name: Configurar Python
+        uses: actions/setup-python@v5
         with:
-          target: apk
-          runner-python-version: "3.11"
-          bundled-python-version: "3.11"
+          python-version: "3.11"
+
+      - name: Instalar Flet y preparar entorno
+        run: |
+          pip install --upgrade pip
+          pip install "flet==1.1.2"
+          flet build apk --yes || true
+
+      - name: Aceptar licencias Android SDK de Flet
+        run: |
+          yes | /home/runner/flutter/3.47.9/bin/flutter doctor --android-licenses || true
+
+      - name: Compilar APK definitivo
+        run: |
+          flet build apk --yes --verbose
 
       - name: Subir APK listo para descargar
         uses: actions/upload-artifact@v4
         with:
           name: app-carmelitas-apk
-          path: ${{ steps.build.outputs.archive-path }}
-          archive: false
-          if-no-files-found: error
+          path: build/apk/*.apk
