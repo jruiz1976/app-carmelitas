@@ -12,30 +12,9 @@ jobs:
       - name: Descargar codigo
         uses: actions/checkout@v4
 
-      - name: Configurar Python
-        uses: actions/setup-python@v5
+      - name: Compilar APK con Flet
+        uses: flet-dev/flet-build-action@v1
         with:
-          python-version: "3.11"
-
-      - name: Configurar Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: "zulu"
-          java-version: "17"
-
-      - name: Configurar Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: "stable"
-
-      - name: Instalar dependencias y compilar APK
-        run: |
-          pip install --upgrade pip
-          pip install flet
-          flet build apk --yes
-
-      - name: Subir APK listo para descargar
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-carmelitas-apk
-          path: build/apk/*.apk
+          target: apk
+          upload-artifact: true
+          artifact-name: app-carmelitas-apk
